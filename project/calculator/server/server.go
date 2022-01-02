@@ -12,6 +12,7 @@ type server struct {
 }
 
 func (*server) Sum(ctx context.Context, request *calculatorpb.SumRequest) (*calculatorpb.SumResponse, error) {
+	log.Printf("Recieved Sum RPC: %v", request)
 	res := &calculatorpb.SumResponse{
 		Result: request.GetFirstNumber() + request.GetSecondNumber(),
 	}
@@ -19,7 +20,7 @@ func (*server) Sum(ctx context.Context, request *calculatorpb.SumRequest) (*calc
 }
 
 func main() {
-	log.Println("Hello World")
+	log.Println("Calculator Server")
 
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
 	defer lis.Close()

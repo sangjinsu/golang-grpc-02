@@ -9,11 +9,11 @@ import (
 )
 
 func main() {
-	log.Println("Hello I'm a client")
+	log.Println("Calculator Client")
 	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer conn.Close()
 	if err != nil {
-		log.Fatalf("could not connect: %v", err)
+		log.Fatalf("could not connect: %v\n", err)
 	}
 
 	c := calculatorpb.NewCalculatorServiceClient(conn)
