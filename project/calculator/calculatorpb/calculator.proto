@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package greet;
+package calculator;
 option go_package = "calculator/calculatorpb";
 
 
