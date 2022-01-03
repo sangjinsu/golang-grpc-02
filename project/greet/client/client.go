@@ -21,6 +21,64 @@ func main() {
 	c := greetpb.NewGreetServiceClient(conn)
 	// log.Printf("Created client: %f", c)
 	//doUnary(c)
+	//serverStream(c)
+	clientStream(c)
+
+}
+
+func clientStream(c greetpb.GreetServiceClient) {
+	log.Println("Starting to do a Client Streaming RPC...")
+
+	requests := []*greetpb.LongGreetRequest{
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Jinsu",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Wanhee",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Seongho",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Hana",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Hyeonbin",
+			},
+		},
+	}
+
+	stream, err := c.LongGreet(context.Background())
+	if err != nil {
+		log.Fatalf("error while calling LongGreet: %v", err)
+	}
+
+	// we iterate over our slice and send each message individually
+	for _, request := range requests {
+		err := stream.Send(request)
+		if err != nil {
+			log.Fatalln("error while sending request")
+		}
+	}
+
+	response, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("error while receiving response from LongGreet: %v", err)
+	}
+
+	log.Printf("LongGreet Response: %v\n", response)
+}
+
+func serverStream(c greetpb.GreetServiceClient) {
 	log.Println("Starting to do a Server Streaming RPC...")
 	req := &greetpb.GreetManyTimesRequest{Greeting: &greetpb.Greeting{
 		FirstName: "Jinsu",
@@ -41,7 +99,6 @@ func main() {
 		}
 		log.Printf("Response from GreetManyTimes: %v", response.GetResult())
 	}
-
 }
 
 func doUnary(c greetpb.GreetServiceClient) {
