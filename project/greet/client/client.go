@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"log"
+	"sync"
 )
 
 func main() {
@@ -22,8 +23,79 @@ func main() {
 	// log.Printf("Created client: %f", c)
 	//doUnary(c)
 	//serverStream(c)
-	clientStream(c)
+	//clientStream(c)
+	doBiDiStream(c)
+}
 
+func doBiDiStream(c greetpb.GreetServiceClient) {
+	log.Println("Starting to do a BiDi Streaming RPC...")
+
+	requests := []*greetpb.GreetEveryoneRequest{
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Jinsu",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Wanhee",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Seongho",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Hana",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Hyeonbin",
+			},
+		},
+	}
+
+	stream, err := c.GreetEveryone(context.Background())
+	if err != nil {
+		log.Fatalf("Error while creating stream")
+		return
+	}
+
+	var wg sync.WaitGroup
+	for _, request := range requests {
+		wg.Add(1)
+		go func(request *greetpb.GreetEveryoneRequest) {
+			defer wg.Done()
+			log.Printf("Sending message %v\n", request)
+			stream.Send(request)
+		}(request)
+	}
+
+	wg.Wait()
+	stream.CloseSend()
+
+	results := make(chan string)
+	go func() {
+		defer close(results)
+		for {
+			recv, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error while receiving %v", err)
+			}
+			results <- recv.GetResult()
+
+		}
+	}()
+
+	for result := range results {
+		log.Printf("Received %v", result)
+	}
 }
 
 func clientStream(c greetpb.GreetServiceClient) {

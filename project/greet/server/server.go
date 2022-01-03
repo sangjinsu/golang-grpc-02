@@ -13,6 +13,31 @@ import (
 type server struct {
 }
 
+func (s *server) GreetEveryone(everyoneServer greetpb.GreetService_GreetEveryoneServer) error {
+	log.Println("GreetEveryone function was invoked with a streaming request")
+
+	for {
+		request, err := everyoneServer.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v\n", err)
+			return err
+		}
+
+		firstName := request.GetGreeting().GetFirstName()
+		result := "Hello " + firstName + "! "
+		err = everyoneServer.Send(&greetpb.GreetEveryoneResponse{
+			Result: result,
+		})
+		if err != nil {
+			log.Fatalf("Error while sending client stream: %v\n", err)
+			return err
+		}
+	}
+}
+
 func (*server) LongGreet(greetServer greetpb.GreetService_LongGreetServer) error {
 
 	log.Println("LongGreet function was invoked with a streaming request")
@@ -26,6 +51,7 @@ func (*server) LongGreet(greetServer greetpb.GreetService_LongGreetServer) error
 		}
 		if err != nil {
 			log.Fatalf("Error while reading client stream: %v\n", err)
+			return err
 		}
 
 		firstName := req.GetGreeting().GetFirstName()
@@ -44,6 +70,7 @@ func (*server) GreetManyTimes(request *greetpb.GreetManyTimesRequest, timesServe
 		err := timesServer.Send(response)
 		if err != nil {
 			log.Fatalf("While sending response, error occurred %s", err)
+			return err
 		}
 	}
 	return nil
