@@ -11,6 +11,28 @@ import (
 type server struct {
 }
 
+func (*server) PrimeNumberDecomposition(request *calculatorpb.PrimeNumberDecompositionRequest, stream calculatorpb.CalculatorService_PrimeNumberDecompositionServer) error {
+	log.Printf("Received PrimeNumberDecomposition RPC: %v", request)
+	number := request.GetNumber()
+	k := int64(2)
+
+	for number > 1 {
+		if number%k == 0 {
+			number /= k
+			response := &calculatorpb.PrimeNumberDecompositionResponse{
+				Prime: k,
+			}
+			err := stream.Send(response)
+			if err != nil {
+				log.Fatalf("While sending response, error occurred %s", err)
+			}
+		} else {
+			k++
+		}
+	}
+	return nil
+}
+
 func (*server) Sum(ctx context.Context, request *calculatorpb.SumRequest) (*calculatorpb.SumResponse, error) {
 	log.Printf("Recieved Sum RPC: %v", request)
 	res := &calculatorpb.SumResponse{
