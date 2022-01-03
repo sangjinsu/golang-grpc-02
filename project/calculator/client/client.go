@@ -4,7 +4,9 @@ import (
 	"context"
 	"github.com/grpc-project02/project/calculator/calculatorpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"io"
 	"log"
 	"sync"
@@ -22,7 +24,29 @@ func main() {
 	// log.Printf("Created client: %f", c)
 	// doServerStreaming(c)
 	// doClientStreaming(c)
-	doBiDiStreaming(c)
+	// doBiDiStreaming(c)
+	doErrorUnary(c)
+}
+
+func doErrorUnary(c calculatorpb.CalculatorServiceClient) {
+	resp, err := c.SquareRoot(context.Background(), &calculatorpb.SquareRootRequest{
+		Number: -36,
+	})
+	if err != nil {
+		respErr, ok := status.FromError(err)
+		if ok {
+			log.Println(respErr.Message())
+			log.Println(respErr.Code())
+			if respErr.Code() == codes.InvalidArgument {
+				log.Println("We probably send a negative number")
+			}
+
+		} else {
+			log.Fatalf("Big Error calling SquareRoot %v", err)
+		}
+		return
+	}
+	log.Printf("Response from SquareRoot: %v", resp.GetNumberRoot())
 }
 
 func doBiDiStreaming(c calculatorpb.CalculatorServiceClient) {

@@ -37,6 +37,14 @@ message FindMaximumResponse {
   int64 max = 1;
 }
 
+message SquareRootRequest {
+  int64 number = 1;
+}
+
+message SquareRootResponse {
+  double number_root = 1;
+}
+
 service CalculatorService{
   // Unary
   rpc Sum(SumRequest) returns (SumResponse);
@@ -48,4 +56,6 @@ service CalculatorService{
   rpc ComputeAverage(stream ComputeAverageRequest) returns (ComputeAverageResponse);
 
   rpc FindMaximum(stream FindMaximumRequest) returns (stream FindMaximumResponse);
+
+  rpc SquareRoot(SquareRootRequest) returns (SquareRootResponse);
 }
