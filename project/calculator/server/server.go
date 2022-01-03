@@ -6,10 +6,37 @@ import (
 	"google.golang.org/grpc"
 	"io"
 	"log"
+	"math"
 	"net"
 )
 
 type server struct {
+}
+
+func (s *server) FindMaximum(maximumServer calculatorpb.CalculatorService_FindMaximumServer) error {
+	log.Println("Received FindMaximum RPC")
+
+	max := int64(math.MinInt64)
+	for {
+		recv, err := maximumServer.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v", err)
+			return err
+		}
+
+		number := recv.GetNumber()
+		log.Println(number)
+		if max < number {
+			max = number
+			err := maximumServer.Send(&calculatorpb.FindMaximumResponse{Max: max})
+			if err != nil {
+				log.Fatalf("Error while sending client stream: %v", err)
+			}
+		}
+	}
 }
 
 func (*server) ComputeAverage(averageServer calculatorpb.CalculatorService_ComputeAverageServer) error {

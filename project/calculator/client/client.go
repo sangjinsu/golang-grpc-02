@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"log"
+	"sync"
 )
 
 func main() {
@@ -20,8 +21,66 @@ func main() {
 	c := calculatorpb.NewCalculatorServiceClient(conn)
 	// log.Printf("Created client: %f", c)
 	// doServerStreaming(c)
-	doClientStreaming(c)
+	// doClientStreaming(c)
+	doBiDiStreaming(c)
+}
 
+func doBiDiStreaming(c calculatorpb.CalculatorServiceClient) {
+	requests := []*calculatorpb.FindMaximumRequest{
+		{
+			Number: 10,
+		},
+		{
+			Number: 15,
+		},
+		{
+			Number: 15,
+		},
+		{
+			Number: 19,
+		},
+		{
+			Number: 21,
+		},
+	}
+	stream, err := c.FindMaximum(context.Background())
+	if err != nil {
+		return
+	}
+
+	var wg sync.WaitGroup
+	for _, request := range requests {
+		wg.Add(1)
+		go func(request *calculatorpb.FindMaximumRequest) {
+			defer wg.Done()
+			err := stream.Send(request)
+			if err != nil {
+				return
+			}
+		}(request)
+	}
+
+	results := make(chan int64)
+	go func() {
+		defer close(results)
+		for {
+			recv, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error while receiving %v", err)
+			}
+			results <- recv.GetMax()
+		}
+	}()
+
+	wg.Wait()
+	stream.CloseSend()
+
+	for result := range results {
+		log.Printf("Response from FindMaximum: %v", result)
+	}
 }
 
 func doClientStreaming(c calculatorpb.CalculatorServiceClient) {
