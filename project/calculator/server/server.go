@@ -4,11 +4,37 @@ import (
 	"context"
 	"github.com/grpc-project02/project/calculator/calculatorpb"
 	"google.golang.org/grpc"
+	"io"
 	"log"
 	"net"
 )
 
 type server struct {
+}
+
+func (*server) ComputeAverage(averageServer calculatorpb.CalculatorService_ComputeAverageServer) error {
+	log.Println("Received ComputeAverage RPC")
+
+	var average float64
+	var sum int64
+	var cnt int64
+	for {
+		recv, err := averageServer.Recv()
+		if err == io.EOF {
+			average = float64(sum) / float64(cnt)
+			return averageServer.SendAndClose(&calculatorpb.ComputeAverageResponse{
+				Average: average,
+			})
+
+		}
+
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v", err)
+		}
+
+		sum += recv.GetNumber()
+		cnt++
+	}
 }
 
 func (*server) PrimeNumberDecomposition(request *calculatorpb.PrimeNumberDecompositionRequest, stream calculatorpb.CalculatorService_PrimeNumberDecompositionServer) error {

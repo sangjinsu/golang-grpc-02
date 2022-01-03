@@ -19,7 +19,47 @@ func main() {
 
 	c := calculatorpb.NewCalculatorServiceClient(conn)
 	// log.Printf("Created client: %f", c)
-	doServerStreaming(c)
+	// doServerStreaming(c)
+	doClientStreaming(c)
+
+}
+
+func doClientStreaming(c calculatorpb.CalculatorServiceClient) {
+	requests := []*calculatorpb.ComputeAverageRequest{
+		{
+			Number: 10,
+		},
+		{
+			Number: 15,
+		},
+		{
+			Number: 15,
+		},
+		{
+			Number: 19,
+		},
+		{
+			Number: 21,
+		},
+	}
+
+	stream, err := c.ComputeAverage(context.Background())
+	if err != nil {
+		return
+	}
+
+	for _, request := range requests {
+		err := stream.Send(request)
+		if err != nil {
+			return
+		}
+	}
+
+	recv, err := stream.CloseAndRecv()
+	if err != nil {
+		return
+	}
+	log.Printf("Response from ComputeAverage: %v", recv.GetAverage())
 }
 
 func doServerStreaming(c calculatorpb.CalculatorServiceClient) {
@@ -42,7 +82,7 @@ func doServerStreaming(c calculatorpb.CalculatorServiceClient) {
 	}
 }
 
-func unary(c calculatorpb.CalculatorServiceClient) {
+func doUnary(c calculatorpb.CalculatorServiceClient) {
 	req := &calculatorpb.SumRequest{
 		FirstNumber:  3,
 		SecondNumber: 10,
