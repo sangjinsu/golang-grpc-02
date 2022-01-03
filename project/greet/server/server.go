@@ -12,6 +12,22 @@ import (
 type server struct {
 }
 
+func (*server) GreetManyTimes(request *greetpb.GreetManyTimesRequest, timesServer greetpb.GreetService_GreetManyTimesServer) error {
+	log.Printf("Greet Many times function was invoked with %v", request)
+	greeting := request.GetGreeting()
+	for i := 0; i < 10; i++ {
+		result := fmt.Sprintf("Hello %s number %d", greeting.GetFirstName(), i)
+		response := &greetpb.GreetManyTimesResponse{
+			Result: result,
+		}
+		err := timesServer.Send(response)
+		if err != nil {
+			log.Fatalf("While sending response, error occurred %s", err)
+		}
+	}
+	return nil
+}
+
 func (*server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb.GreetResponse, error) {
 	log.Printf("Greet function was invoked with %v\n", req)
 	greeting := req.GetGreeting()
