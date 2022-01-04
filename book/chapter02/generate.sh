@@ -1,0 +1,1 @@
+protoc ecommerce/ecommercepb/ecommerce.proto --go_out=plugins=grpc:.
